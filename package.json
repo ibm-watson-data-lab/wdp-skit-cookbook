@@ -1,15 +1,18 @@
 {
   "author": "",
   "dependencies": {
+    "async": "^2.5.0",
     "debug": "^3.1.0",
+    "fs": "0.0.1-security",
     "restler": "^3.4.0",
+    "silverlining": "^1.24.5",
     "util": "^0.10.3"
   },
   "description": "basic starter kit prereq setup",
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "^1.1.0",
-    "grunt-jscs": "^3.0.1"    
+    "grunt-jscs": "^3.0.1"
   },
   "license": "Apache-2.0",
   "main": "index.js",

@@ -8,7 +8,7 @@
     "jquery"        : true,
     "latedef"       : true,
     "maxparams"     : 5,
-    "maxdepth"      : 3,
+    "maxdepth"      : 5,
     "maxstatements" : false,
     "noarg"         : true,
     "node"          : true,
