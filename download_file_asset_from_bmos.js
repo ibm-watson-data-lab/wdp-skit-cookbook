@@ -48,6 +48,7 @@ async.series([
       - verify that the project exists
       - retrieve project metadata
     */   
+    debug('Retrieving project list and verifying project information...');   
     WDPClient.project().list({name: project_name}, 
                              function(raw_data, response) {
                                 if(response.statusCode > 200) {
@@ -91,6 +92,7 @@ async.series([
       /* 
         - Verify that the data file (an asset of type 'file/bmos-v3') exists in the specified project.
       */   
+      debug('Retrieving project asset list and locating data file information...');
       WDPClient.project().listAssets({pguid: project_info.guid,
                                       types: 'file/bmos-v3'}, 
                                      function(raw_data, response) {
@@ -118,6 +120,7 @@ async.series([
         - Download the data file from the project's Object Storage instance using the Object Storage API.
         - Store downloaded in local file system using the asset name.
       */ 
+      debug('Downloading data file from Bluemix Object Storage...');
       var os_client = new OSClient(project_info.storage_credentials);
       os_client.downloadObject(project_info.storage_credentials.container, // container name
                                data_file_name, // object name
