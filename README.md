@@ -12,7 +12,7 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
  * Select **Manage** > **Security** > **Bluemix API Keys**
  * Create a new key and save it.
 
-# Accessing project data from Bluemix hosted data sources
+# Accessing project data from Bluemix hosted data data services
 ## Recipe 1: Downloading data files from Bluemix Object Storage
 * Log in to DSX.  
 * Create a project.
