@@ -28,7 +28,16 @@ if(process.argv.length < 5) {
     process.exit(1);
 }
 
-var WDPClient = new client({apitoken:process.argv[2]});
+var conn_options = {
+  apitoken:process.argv[2]
+};
+
+if(process.env.IS_DEV) {
+  conn_options.auth_url = 'https://iam.stage1.ng.bluemix.net/oidc/token';
+  conn_options.base_url = 'https://apsx-api-dev.stage1.ng.bluemix.net'; 
+}
+
+var WDPClient = new client(conn_options);
 
 const project_name = process.argv[3];
 const data_file_name = process.argv[4];

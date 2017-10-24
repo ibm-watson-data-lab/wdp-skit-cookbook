@@ -81,33 +81,46 @@ async.series([
         - Verify that a Cloudant connection (an asset of type 'connection/cdsx-v1') exists in the specified project.
       */   
       debug('Retrieving project asset list and locating connection information...');
-      WDPClient.project().listAssets({pguid: project_info.guid,
-                                      types: 'connection/cdsx-v1'}, 
+      WDPClient.project().listAssets({guid: project_info.guid}, 
                                      function(raw_data, response) {
                                       if(response.statusCode > 200) {
                                         return callback('Error verifying that connection ' + connection_name + ' is defined in project ' + project_name + 
                                                         '. Asset list request returned HTTP code ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
                                       }
                                       else {
-                                        debug('Retrieved asset list:' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
+                                        debug('Retrieved asset list - ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
                                         const data = JSON.parse(raw_data);
-                                        const cloudant_connection_asset = _.find(data.assets,
-                                                                                 function(asset) {
-                                                                                  return((asset.name === connection_name) && (asset.properties.parameters.database_type === 'cloudant'));
-                                                                                 });
-                                        if(cloudant_connection_asset) {
-                                            // save connection information
-                                            project_info.connection_type = cloudant_connection_asset.properties.parameters.database_type;
-                                            project_info.connection_credentials = {
-                                              username: cloudant_connection_asset.properties.parameters.credentials.username,
-                                              password: cloudant_connection_asset.properties.parameters.credentials.password,
-                                              host: cloudant_connection_asset.properties.parameters.credentials.host,
-                                              port: cloudant_connection_asset.properties.parameters.credentials.port,
-                                              url: cloudant_connection_asset.properties.parameters.credentials.url,
-                                              database: cloudant_connection_asset.properties.parameters.database
-                                            };
-                                            debug('Connection credentials for Cloudant connection ' + connection_name + ': ' + JSON.stringify(project_info));
-                                            return callback(null, "Asset verification step: OK.");    
+                                        const connection_asset = _.find(data.results,
+                                                                        function(asset) {
+                                                                          return((asset.metadata.name === connection_name) && (asset.metadata.asset_type === 'connection'));
+                                                                        });
+                                        if(connection_asset) {
+                                            // get connection information using asset id
+                                            WDPClient.project().getAsset({pguid:project_info.guid, aguid:connection_asset.metadata.asset_id},
+                                                                         function(raw_data, response) {
+                                                                            if(response.statusCode > 200) {
+                                                                              return callback('Error verifying that connection ' + connection_name + ' is defined in project ' + project_name + 
+                                                                              '. Asset fetch request returned HTTP code ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
+                                                                            }
+                                                                            else {
+                                                                              debug('Retrieved asset info - ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);   
+                                                                              // save connection information
+/*                                                                              project_info.connection_type = connection_asset.properties.parameters.database_type;
+                                                                              project_info.connection_credentials = {
+                                                                                username: cloudant_connection_asset.properties.parameters.credentials.username,
+                                                                                password: cloudant_connection_asset.properties.parameters.credentials.password,
+                                                                                host: cloudant_connection_asset.properties.parameters.credentials.host,
+                                                                                port: cloudant_connection_asset.properties.parameters.credentials.port,
+                                                                                url: cloudant_connection_asset.properties.parameters.credentials.url,
+                                                                                database: cloudant_connection_asset.properties.parameters.database
+                                                                              };
+*/
+                                                                              debug('Connection credentials for Cloudant connection ' + connection_name + ': ' + JSON.stringify(project_info));
+                                                                              return callback(null, "Asset verification step: OK.");    
+                                                                               
+                                                                            }
+                                                                         });
+
                                         }
                                         else {
                                           return callback('Error. No Cloudant connection named ' + connection_name + ' is defined in project ' + project_name);
