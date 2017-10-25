@@ -15,6 +15,7 @@
 const async = require('async');
 const debug = require('debug')('connect');
 const _ = require('lodash');
+const url = require('url');
 
 const client = require('./lib/client.js');
 
@@ -70,7 +71,6 @@ async.series([
                                   else {
                                     // get project id
                                     project_info.guid = data.resources[0].metadata.guid;
-                                    debug('Object Storage information for project ' + project_name + ': ' + JSON.stringify(project_info));
                                     return callback(null, "Project step: OK.");
                                   }                                           
                                 }
@@ -78,49 +78,41 @@ async.series([
     },
     function(callback) {
       /* 
-        - Verify that a Cloudant connection (an asset of type 'connection/cdsx-v1') exists in the specified project.
+        - Verify that a Cloudant connection with the specified name was defined in the project.
       */   
-      debug('Retrieving project asset list and locating connection information...');
-      WDPClient.project().listAssets({guid: project_info.guid}, 
+      debug('Retrieving connection list and locating connection information for ' + connection_name + ' ...');
+      WDPClient.project().listConnections({guid: project_info.guid}, 
                                      function(raw_data, response) {
                                       if(response.statusCode > 200) {
                                         return callback('Error verifying that connection ' + connection_name + ' is defined in project ' + project_name + 
-                                                        '. Asset list request returned HTTP code ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
+                                                        '. Connection list request returned HTTP code ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
                                       }
                                       else {
-                                        debug('Retrieved asset list - ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
+                                        debug('Retrieved connection list - ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
                                         const data = JSON.parse(raw_data);
-                                        const connection_asset = _.find(data.results,
+                                        const connection_asset = _.find(data.resources,
                                                                         function(asset) {
-                                                                          return((asset.metadata.name === connection_name) && (asset.metadata.asset_type === 'connection'));
+                                                                          return((asset.entity.name === connection_name) && (asset.metadata.asset_type === 'connection'));
                                                                         });
                                         if(connection_asset) {
-                                            // get connection information using asset id
-                                            WDPClient.project().getAsset({pguid:project_info.guid, aguid:connection_asset.metadata.asset_id},
-                                                                         function(raw_data, response) {
-                                                                            if(response.statusCode > 200) {
-                                                                              return callback('Error verifying that connection ' + connection_name + ' is defined in project ' + project_name + 
-                                                                              '. Asset fetch request returned HTTP code ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);
-                                                                            }
-                                                                            else {
-                                                                              debug('Retrieved asset info - ' + response.statusCode + ' (' + response.statusMessage + '): ' + response.raw);   
-                                                                              // save connection information
-/*                                                                              project_info.connection_type = connection_asset.properties.parameters.database_type;
-                                                                              project_info.connection_credentials = {
-                                                                                username: cloudant_connection_asset.properties.parameters.credentials.username,
-                                                                                password: cloudant_connection_asset.properties.parameters.credentials.password,
-                                                                                host: cloudant_connection_asset.properties.parameters.credentials.host,
-                                                                                port: cloudant_connection_asset.properties.parameters.credentials.port,
-                                                                                url: cloudant_connection_asset.properties.parameters.credentials.url,
-                                                                                database: cloudant_connection_asset.properties.parameters.database
-                                                                              };
-*/
-                                                                              debug('Connection credentials for Cloudant connection ' + connection_name + ': ' + JSON.stringify(project_info));
-                                                                              return callback(null, "Asset verification step: OK.");    
-                                                                               
-                                                                            }
-                                                                         });
-
+                                          // extract database information from URL if a database name was specified
+                                          var cloudant_url = url.parse(connection_asset.entity.properties.custom_url);
+                                          var database = null;
+                                          const db_re = /^\/([^\/]+)\/?$/;
+                                          const re_match = db_re.exec(cloudant_url.pathname);
+                                          if(re_match) {
+                                            database = re_match[1];
+                                            cloudant_url.pathname = '/';
+                                          }
+                                          project_info.connection_type = 'cloudant';
+                                          project_info.connection_credentials = {
+                                            username: connection_asset.entity.properties.username,
+                                            password: connection_asset.entity.properties.password,
+                                            url: url.format(cloudant_url),
+                                            database: database
+                                          };
+                                          debug('Connection information: ' + JSON.stringify(project_info.connection_credentials));
+                                          return callback(null, 'Connection lookup step: OK.');
                                         }
                                         else {
                                           return callback('Error. No Cloudant connection named ' + connection_name + ' is defined in project ' + project_name);
@@ -133,14 +125,30 @@ async.series([
         - Connect to Cloudant using the provided credentials. 
         Refer to https://medium.com/ibm-watson-data-lab/choosing-a-cloudant-library-d14c06f3d714 to learn more about Cloudant libraries for Node.js.
       */ 
-      debug('Connecting to the database...');
-      var db = require('silverlining')(project_info.connection_credentials.url, project_info.connection_credentials.database); 
-      db.count().then(function(data) {
-        debug('The database contains ' + data + ' documents.');
-        return callback(null, "Connection step: OK.");
-      }).catch(function(err) {
-        return callback('Error connecting to the Cloudant database: ' + JSON.stringify(err));
-      });
+
+      if(project_info.connection_credentials.database) {
+        debug('Connecting to database ' + project_info.connection_credentials.database + ' ...');
+        var db = require('silverlining')(project_info.connection_credentials.url, project_info.connection_credentials.database); 
+          db.count().then(function(data) {
+            debug('The database contains ' + data + ' documents.');
+            return callback(null, "Connection step: OK.");
+          }).catch(function(err) {
+            return callback('Error connecting to the Cloudant database: ' + JSON.stringify(err));
+          });
+      } 
+      else {
+        // https://www.npmjs.com/package/cloudant
+        var Cloudant = require('cloudant');
+        var cloudant = Cloudant({url: project_info.connection_credentials.url, plugin:'promises'});
+        cloudant.db.list().then(function(data) {
+            debug('This Cloudant instance contains ' + data.length + ' databases.');
+            return callback(null, "Connection step: OK.");
+        }).catch(function(err) {
+          return callback('Error connecting to Cloudant: ' + JSON.stringify(err));
+        });
+      }
+
+
     },
 ],
 function(err, results) {
