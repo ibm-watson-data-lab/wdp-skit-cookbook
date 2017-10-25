@@ -2,11 +2,14 @@
   "author": "",
   "dependencies": {
     "async": "^2.5.0",
+    "cloudant": "^1.8.0",
     "debug": "^3.1.0",
     "fs": "0.0.1-security",
+    "ibm-cos-sdk": "^1.0.2",
     "ibm_db": "^2.2.1",
     "restler": "^3.4.0",
     "silverlining": "^1.24.5",
+    "url": "^0.11.0",
     "util": "^0.10.3"
   },
   "description": "basic starter kit prereq setup",
