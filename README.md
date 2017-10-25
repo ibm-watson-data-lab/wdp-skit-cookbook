@@ -13,14 +13,14 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
  * Create a new key and save it.
 
 # Accessing project data from Bluemix hosted data data services
-## Recipe 1: Downloading data files from Bluemix Object Storage
+## Recipe 1: Downloading data files from Bluemix Cloud Object Storage
 * Log in to DSX.  
-* Create a project.
+* Create a project and attach it to a Bluemix Cloud Object Storage service instance.
 * Upload a data file to the project.
-* Explore (and run) `download_file_asset_from_bmos.js`
+* Explore (and run) `download_file_asset_from_bmcos.js`
 
   ```
-  $ node download_file_asset_from_bmos.js <api_key> <project_name> <data_file_name>
+  $ node download_file_asset_from_bmcos.js <api_key> <project_name> <data_file_name>
   ```
 
 ## Recipe 2: Fetching data from a Bluemix hosted Cloudant 
