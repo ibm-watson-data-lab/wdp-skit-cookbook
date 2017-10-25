@@ -22,6 +22,10 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
   ```
   $ node download_file_asset_from_bmcos.js <api_key> <project_name> <data_file_name>
   ```
+  
+  > To inspect the Watson Data Platform API calls and responses enable debug:
+  
+  > MacOS, Linux: `export DEBUG=WDP_API*` Windows: `set DEBUG=WDP_API*`
 
 ## Recipe 2: Fetching data from a Bluemix hosted Cloudant 
 * Log in to DSX.  
@@ -32,7 +36,12 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
   ```
   $ node fetch_data_from_db2_warehouse_connection.js <api_key> <project_name> <bluemix_cloudant_connection_name>
   ```
- 
+
+  > To inspect the Watson Data Platform API calls and responses enable debug:
+  
+  > MacOS, Linux: `export DEBUG=WDP_API*` Windows: `set DEBUG=WDP_API*`
+
+
 ## Recipe 3: Fetching data from a Bluemix hosted Db2 Warehouse on Cloud
 * Log in to DSX.  
 * Create a project.
@@ -42,6 +51,10 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
   ```
   $ node fetch_data_from_db2_warehouse_connection.js <api_key> <project_name> <bluemix_db2_warehouse_connection_name>
   ```
+  > To inspect the Watson Data Platform API calls and responses enable debug:
+  
+  > MacOS, Linux: `export DEBUG=WDP_API*` Windows: `set DEBUG=WDP_API*`
+
 
 # Accessing project data from externally hosted data sources
 ## Recipe 4: Fetching data from an external Cloudant service instance
@@ -53,3 +66,7 @@ Before you can connect to DSX using the WDP Core API you have to create an API k
   ```
   $ node fetch_data_from_external_cloudant_connection <api_key> <project_name> <external_cloudant_connection_name>
   ```
+  > To inspect the Watson Data Platform API calls and responses enable debug:
+  
+  > MacOS, Linux: `export DEBUG=WDP_API*` Windows: `set DEBUG=WDP_API*`
+
